@@ -1,0 +1,25 @@
+services:
+  api:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      MODEL_PATH: /app/models/fraud_pipeline.joblib
+    volumes:
+      - ./models:/app/models:ro
+    restart: unless-stopped
+  dashboard:
+    build: .
+    command: ["streamlit","run","dashboard/app.py","--server.address","0.0.0.0","--server.port","8501"]
+    ports:
+      - "127.0.0.1:8501:8501"
+    environment:
+      API_URL: http://api:8000
+    depends_on:
+      - api
+  redpanda:
+    profiles: ["streaming"]
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.5
+    command: ["redpanda","start","--overprovisioned","--smp","1","--memory","1G","--reserve-memory","0M","--check=false","--node-id","0","--kafka-addr","internal://0.0.0.0:29092,external://0.0.0.0:9092","--advertise-kafka-addr","internal://redpanda:29092,external://localhost:9092"]
+    ports:
+      - "127.0.0.1:9092:9092"
