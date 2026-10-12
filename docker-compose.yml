@@ -1,0 +1,20 @@
+services:
+  api:
+    build: .
+    environment:
+      MODEL_PATH: /app/artifacts/fraud_model.joblib
+      METRICS_PATH: /app/artifacts/metrics.json
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./artifacts:/app/artifacts:ro
+      - ./data/gold:/app/data/gold:ro
+  dashboard:
+    build: .
+    command: ["streamlit","run","dashboard/app.py","--server.address=0.0.0.0","--server.port=8501"]
+    environment:
+      API_URL: http://api:8000
+    ports:
+      - "127.0.0.1:8501:8501"
+    depends_on:
+      - api
